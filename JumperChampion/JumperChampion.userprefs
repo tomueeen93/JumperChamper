@@ -1,10 +1,9 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Script\BoardController.cs">
+  <MonoDevelop.Ide.Workspace />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Script\Flick.cs">
     <Files>
-      <File FileName="Assets\Script\BoardController.cs" Line="28" Column="20" />
-      <File FileName="Assets\Script\CameraController.cs" Line="24" Column="52" />
-      <File FileName="Assets\Script\SpeedUp.cs" Line="17" Column="24" />
+      <File FileName="Assets\Script\Flick.cs" Line="80" Column="44" />
+      <File FileName="Assets\Script\BoardController.cs" Line="133" Column="15" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

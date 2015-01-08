@@ -125,4 +125,15 @@ public class BoardController : MonoBehaviour {
 		}
 	}
 
+	void OnTouch() {
+		print("touch");
+	}
+	
+	void OnFlickUp() {
+		print("up");
+	}
+	
+	void OnFlickDown() {
+		print("down");
+	}
 }
