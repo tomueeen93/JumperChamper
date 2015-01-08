@@ -15,12 +15,13 @@ public class CameraController : MonoBehaviour {
 		this.target = player;
 		this.offset = this.transform.position - this.player.transform.position;
 
-		Debug.Log(boader.GetComponent<BoardController>().jump_enable);
+		Debug.Log(boader.GetComponent<BoardController>().jumped);
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		if(!boader.GetComponent<BoardController>().jump_enable){
+		// 滑走中はプレイヤーを追尾
+		if(boader.GetComponent<BoardController>().sliding){
 			this.transform.position = new Vector3 (
 				this.player.transform.position.x + this.offset.x,
 				this.player.transform.position.y + this.offset.y,
