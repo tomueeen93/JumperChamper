@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 [System.Serializable]
 public class FlickCallBackRule {
@@ -10,7 +11,10 @@ public class FlickCallBackRule {
 public class Flick : MonoBehaviour {
 	public float validityTouchTime = 0.5f;
 	public float validityTouchDistance = 20.0f;
-	
+
+	public float validitySlideTime = 0.5f;
+	public float validitySlideDistance = 30.0f;
+
 	public float validityFlickTime = 0.5f;
 	public float validityFlickMinDistance = 30.0f;
 	public float validityFlickMaxDistance = 300.0f;
@@ -20,13 +24,23 @@ public class Flick : MonoBehaviour {
 	public FlickCallBackRule[] rules;
 	
 	private float touchTime = 0;
+	private float touchingTime = 0;
+
 	private bool isTouch = false;
+	private bool isSlide = false;
+	private bool isFlick = false;
 	
 	private Vector3 touchPosition;
-	
+	private Vector3 touchingPosition;
+
+	private GameObject TextObject;
+	//private Text msgText = TextObject.gameObject.GetComponent<Text>();
+
 	void Update () {
-		// マウスをクリックした時の処理
+		// マウスをクリックした瞬間の処理
 		if (Input.GetMouseButtonDown(0)) Down();
+		// マウスをクリックしている時の処理
+		if(Input.GetMouseButton(0)) Touching();
 		// マウスを離した時の処理
 		if (Input.GetMouseButtonUp(0)) Up();
 	}
@@ -35,17 +49,31 @@ public class Flick : MonoBehaviour {
 	void Down() {
 		// タッチした時のポジションを保存
 		touchPosition = Input.mousePosition;
-
 		// タッチした時間の保存
 		touchTime = Time.time;
 		isTouch = true;
+	}
+	// マウスクリックをしている間の処理
+	void Touching(){
+		// タッチしている座標を保存
+		touchingPosition = Input.mousePosition;
+		// タッチしているところの距離を保存
+		float distance = Vector3.Distance(touchPosition, touchingPosition);
+		// 角度を計算
+		int deg = getDeg (touchPosition, touchingPosition);
+		// タッチしてからの時間を取得
+		float touchingTime = Time.time - touchTime;
+
+		// デバッグ用の処理
+		TextObject = GameObject.Find("DebugLog");
+		Text str = TextObject.GetComponent<Text>();
+		str.text = "distance : "+distance+"\ndeg : "+deg+"\ntime : "+touchingTime;
 	}
 
 	// マウスを離した時の処理
 	void Up() {
 		// タッチしているかをチェック
 		if (!isTouch) return;
-
 		// タッチし終わった時のマウスポジションを保存
 		Vector3 touchEndPosition = Input.mousePosition;
 
@@ -64,7 +92,7 @@ public class Flick : MonoBehaviour {
 		if (ValidateFlick(deltaTime, distance)) {
 			// フリックルールの設定
 			foreach (FlickCallBackRule rule in rules) {
-				// 
+
 				if (ValidateFlickDeg(rule.deg, deg)) {
 					SendMessage(rule.callbackName);
 					break;

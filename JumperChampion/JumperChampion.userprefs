@@ -1,9 +1,11 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Script\Flick.cs">
     <Files>
-      <File FileName="Assets\Script\Flick.cs" Line="80" Column="44" />
-      <File FileName="Assets\Script\BoardController.cs" Line="133" Column="15" />
+      <File FileName="Assets\Script\Flick.cs" Line="22" Column="2" />
+      <File FileName="Assets\Script\BoardController.cs" Line="132" Column="10" />
+      <File FileName="Assets\Script\Flick2.cs" Line="21" Column="4" />
+      <File FileName="Assets\Script\Manager.cs" Line="15" Column="37" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
