@@ -19,7 +19,8 @@ public class Flick : MonoBehaviour {
 	public float validityFlickMinDistance = 30.0f;
 	public float validityFlickMaxDistance = 300.0f;
 	public int validityFlickDegRange = 20;
-	
+
+	// タッチ操作が有効かどうか
 	public bool enabledOnTouch = true;
 	public FlickCallBackRule[] rules;
 	
@@ -33,9 +34,8 @@ public class Flick : MonoBehaviour {
 	private Vector3 touchPosition;
 	private Vector3 touchingPosition;
 
-	private GameObject TextObject;
-	//private Text msgText = TextObject.gameObject.GetComponent<Text>();
 
+	//private Text msgText = TextObject.gameObject.GetComponent<Text>();
 	void Update () {
 		// マウスをクリックした瞬間の処理
 		if (Input.GetMouseButtonDown(0)) Down();
@@ -64,14 +64,20 @@ public class Flick : MonoBehaviour {
 		// タッチしてからの時間を取得
 		float touchingTime = Time.time - touchTime;
 
-		// デバッグ用の処理
-		TextObject = GameObject.Find("DebugLog");
-		Text str = TextObject.GetComponent<Text>();
-		str.text = "distance : "+distance+"\ndeg : "+deg+"\ntime : "+touchingTime;
+		// スライドの整合性が正しければスライドオン
+		if (ValidateSlide (touchingTime, distance)) {
+			SendMessage("setDeg",deg);
+			SendMessage("setTime",touchingTime);
+			SendMessage("setDistance",distance);
+			SendMessage("setSlide",true);
+		}
 	}
 
 	// マウスを離した時の処理
 	void Up() {
+		// スライド状態の終了
+		SendMessage ("setSlide",false);
+
 		// タッチしているかをチェック
 		if (!isTouch) return;
 		// タッチし終わった時のマウスポジションを保存
@@ -86,48 +92,38 @@ public class Flick : MonoBehaviour {
 
 		// タッチが有効　かつ タッチ時間と距離の整合性チェック
 		if (enabledOnTouch && ValidateTouch(deltaTime, distance)) {
-			SendMessage("OnTouch");
+			SendMessage("setTouch",true);
 		}
 		// 同じくフリックの整合性のチェック
 		if (ValidateFlick(deltaTime, distance)) {
-			// フリックルールの設定
-			foreach (FlickCallBackRule rule in rules) {
-
-				if (ValidateFlickDeg(rule.deg, deg)) {
-					SendMessage(rule.callbackName);
-					break;
-				}
-			}
+			SendMessage("setDistance",distance);
+			SendMessage("setDeg",deg);
+			SendMessage("setFlick",true);
 		}
+
 		// すべての整合性がとれたらタッチ判定を消す
 		isTouch = false;
 	}
-	
+
+	// タッチの整合性チェックメソッド
 	bool ValidateTouch(float deltaTime, float distance) {
 		if (validityTouchTime < deltaTime) return false;
 		if (validityTouchDistance < distance) return false;
 		return true;
 	}
-	
+	// スライドの整合性チェックメソッド
+	bool ValidateSlide(float time, float distance){
+		if (validitySlideTime < time && validitySlideDistance < distance)
+			return true;
+		return false;
+	}
+	// フリックの整合性チェックメソッド
 	bool ValidateFlick(float deltaTime, float distance) {
 		if (validityFlickTime < deltaTime) return false;
 		
 		return (validityFlickMinDistance < distance && distance < validityFlickMaxDistance);
 	}
-	
-	bool ValidateFlickDeg(int ruleDeg, int deg) {
-		int min = ruleDeg - validityFlickDegRange;
-		int max = ruleDeg + validityFlickDegRange;
-		
-		if (min < deg && deg < max) return true;
-		
-		// 0度付近を考慮し360度分足してから再チェック
-		min += 360;
-		max += 360;
-		
-		return min < deg && deg < max;
-	}
-	
+	// ２点間の角度を計算するメソッド
 	int getDeg(Vector3 a, Vector3 b) {
 		return Mathf.RoundToInt(180 + (Mathf.Atan2(a.x - b.x, a.y - b.y) * Mathf.Rad2Deg));
 	}
