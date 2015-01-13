@@ -17,8 +17,7 @@ public class SpeedUp : MonoBehaviour {
 	// Enter Speed Up Area
 	private void OnTriggerEnter(Collider other)
 	{
-		if(other.name =="Board"){
-			Debug.Log("Down force");
+		if(other.name == "Board"){
 			other.gameObject.rigidbody.AddForce(Vector3.down * down_power, ForceMode.Impulse);
 		}
 	}

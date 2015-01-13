@@ -26,6 +26,10 @@ public class BoardController : MonoBehaviour {
 	public float twist_time;
 	// 回転ジャンプをするかどうか
 	public bool rotate_jump;
+	// どちら側を前に滑っているか
+	public bool left_front;
+	// 着地した際のBadDireciton判定
+	public bool bad_direction;
 
 	// イベントの設定
 	private bool touch;
@@ -48,11 +52,15 @@ public class BoardController : MonoBehaviour {
 	string rotate_str;
 	string direction_str;
 
+	// アニメーション用にオブジェクト取得
+	Animator animator;
+	public GameObject boarderModelObject;
+
 	// Use this for initialization
 	private void Start () {
 		move_power = 100;
 		jump_power = 0.5f;
-		rotate_power = 250;
+		rotate_power = 25;
 		down_power = 50;
 		go_left = false;
 		sliding = false;
@@ -60,6 +68,13 @@ public class BoardController : MonoBehaviour {
 		jumped = true;
 		left_twist = false;
 		right_twist = false;
+		left_front =false;
+		bad_direction =false;
+
+		Debug.Log (boarderModelObject);
+		Debug.Log (animator);
+
+		animator.SetTrigger("toJumping");
 		// デバッグ用の処理
 		TextObject = GameObject.Find("DebugLog");
 		str = TextObject.GetComponent<Text>();
@@ -91,6 +106,8 @@ public class BoardController : MonoBehaviour {
 		}
 		// 上キー入力
 		if (Input.GetKeyDown(KeyCode.UpArrow)) {
+			// ジャンプ中のアニメーションを開始
+			//boarderModelObject.SendMessage("AnimateJumping");
 			rigidbody.AddRelativeForce(Vector3.up * jump_power, ForceMode.Impulse);
 			Debug.Log("Jump");
 		}
@@ -152,7 +169,6 @@ public class BoardController : MonoBehaviour {
 		else Debug.Log("Rotate ERROR");
 		*/
 	}
-
 	// トリガーの衝突判定
 	private void OnTriggerEnter(Collider other)
 	{
@@ -193,8 +209,12 @@ public class BoardController : MonoBehaviour {
 				// 滑走終了 ジャンプ開始
 				sliding= false;
 				jumped=true;
+				// 滑走方向状態の解除
+				bad_direction = false;
 				// 着地のリセット
 				landed = false;
+				// ジャンプアニメーションの開始
+				animator.SetTrigger("toJumping");
 			}
 		}
 	}
@@ -207,22 +227,22 @@ public class BoardController : MonoBehaviour {
 			if(!landed){
 				// 着地時のボード角度から向きを判定
 				float board_direction_X = this.transform.eulerAngles.x;
-
-				if(330 < board_direction_X || board_direction_X < 30){
-					if(go_left)direction_str = "Good Direction : right front\n" + board_direction_X;
-					else direction_str = "Good Direction : left front\n" + board_direction_X;
-				}else if (150 < board_direction_X && board_direction_X < 210) {
-					if(go_left)direction_str = "Good Direction : left front\n" + board_direction_X;
-					else direction_str = "Good Direction : right front\n" + board_direction_X;
-				}else{
-					direction_str = "Bad Direction\n" + board_direction_X;
-				}
+				if(!checkLeftFront(board_direction_X,30))Debug.Log ("Landed Check ERROR");
 
 				// ツイスト状態を解除
 				left_twist = false;
 				right_twist = false;
 				// 着地状態に以降
 				landed = true;
+				// 滑走アニメーションを開始
+				if(bad_direction)animator.SetTrigger("toIdle"); 
+				else if(go_left){
+					if(left_front)animator.SetTrigger("toRightSlide");
+						else animator.SetTrigger("toLeftSlide");
+				} else {
+					if(left_front)animator.SetTrigger("toLeftSlide");
+						else animator.SetTrigger("toRightSlide");
+				}
 			}
 		}
 	}
@@ -243,6 +263,31 @@ public class BoardController : MonoBehaviour {
 		str.text = debug_message;
 	}
 
+	// どちらが前なのかチェック
+	public bool checkLeftFront(float degX , int maxDeg){
+		if(360-maxDeg < degX || degX < maxDeg){
+			if(go_left){
+				direction_str = "Good Direction : right front\n" + degX;
+				left_front = false;
+			}else{
+				direction_str = "Good Direction : left front\n" + degX;
+				left_front= false;
+			}
+		}else if (180-maxDeg < degX && degX < 180+maxDeg) {
+			if(go_left){
+				direction_str = "Good Direction : left front\n" + degX;
+				left_front = true;
+			}else{
+				direction_str = "Good Direction : right front\n" + degX;
+				left_front = true;
+			}
+		}else{
+			direction_str = "Bad Direction\n" + degX;
+			bad_direction = true;
+		}
+		return false;
+	}
+
 	// 外部からの呼び出し用
 	public void setTime(float time){touchingTime = time;}
 	public void setDeg(int deg){this.deg = deg;}
@@ -250,4 +295,5 @@ public class BoardController : MonoBehaviour {
 	public void setTouch (bool is_touch){touch = is_touch;}
 	public void setSlide(bool is_slide){slide = is_slide;}
 	public void setFlick(bool is_flick){flick = is_flick;}
+	public void setAnimator(Animator animator){this.animator = animator;}
 }
