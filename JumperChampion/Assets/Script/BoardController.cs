@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#define DEBUG
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 
@@ -156,10 +157,11 @@ public class BoardController : MonoBehaviour {
 	// オブジェクトの回転
 	private void Rotate(int deg){
 		Debug.Log (deg+" , "+Mathf.Sin(deg));
-		// Vector3 v = new Vector ( Mathf.Cos(deg), Mathf.Sin(deg), 0f);
-		//rigidbody.AddRelativeTorque(v, ForceMode.Impulse);
-		//rigidbody.AddRelativeTorque (v , ForceMode.Impulse);
-		/*
+
+#if DEBUG
+		Vector3 v = new Vector3( Mathf.Cos(deg), Mathf.Sin(deg), 0f);
+		rigidbody.AddRelativeTorque(v, ForceMode.Impulse);
+		rigidbody.AddRelativeTorque (v , ForceMode.Impulse);
 		// 右回転
 		if(deg > 60 && deg < 120)rigidbody.AddRelativeTorque(Vector3.up * rotate_power, ForceMode.Impulse);
 		// 左回転
@@ -167,7 +169,8 @@ public class BoardController : MonoBehaviour {
 		else if(false){}
 		else if(false){}
 		else Debug.Log("Rotate ERROR");
-		*/
+#endif
+
 	}
 	// トリガーの衝突判定
 	private void OnTriggerEnter(Collider other)
@@ -226,8 +229,8 @@ public class BoardController : MonoBehaviour {
 			// 着地していなかったら
 			if(!landed){
 				// 着地時のボード角度から向きを判定
-				float board_direction_X = this.transform.eulerAngles.x;
-				if(!checkLeftFront(board_direction_X,30))Debug.Log ("Landed Check ERROR");
+				float board_direction_Y = this.transform.eulerAngles.y;
+				if(!checkLeftFront(board_direction_Y,30))Debug.Log ("Landed Check ERROR");
 
 				// ツイスト状態を解除
 				left_twist = false;
@@ -264,25 +267,25 @@ public class BoardController : MonoBehaviour {
 	}
 
 	// どちらが前なのかチェック
-	public bool checkLeftFront(float degX , int maxDeg){
-		if(360-maxDeg < degX || degX < maxDeg){
+	public bool checkLeftFront(float degY , int maxDeg){
+		if(360-maxDeg < degY || degY < maxDeg){
 			if(go_left){
-				direction_str = "Good Direction : right front\n" + degX;
+				direction_str = "Good Direction : right front\n" + degY;
 				left_front = false;
 			}else{
-				direction_str = "Good Direction : left front\n" + degX;
+				direction_str = "Good Direction : left front\n" + degY;
 				left_front= false;
 			}
-		}else if (180-maxDeg < degX && degX < 180+maxDeg) {
+		}else if (180-maxDeg < degY && degY < 180+maxDeg) {
 			if(go_left){
-				direction_str = "Good Direction : left front\n" + degX;
+				direction_str = "Good Direction : left front\n" + degY;
 				left_front = true;
 			}else{
-				direction_str = "Good Direction : right front\n" + degX;
+				direction_str = "Good Direction : right front\n" + degY;
 				left_front = true;
 			}
 		}else{
-			direction_str = "Bad Direction\n" + degX;
+			direction_str = "Bad Direction\n" + degY;
 			bad_direction = true;
 		}
 		return false;
