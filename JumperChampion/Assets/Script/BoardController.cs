@@ -111,6 +111,7 @@ public class BoardController : MonoBehaviour {
 			//boarderModelObject.SendMessage("AnimateJumping");
 			rigidbody.AddRelativeForce(Vector3.up * jump_power, ForceMode.Impulse);
 			Debug.Log("Jump");
+			animator.SetTrigger("toFalling");
 		}
 		// 下キー入力
 		if (Input.GetKeyDown(KeyCode.DownArrow)) {
@@ -202,6 +203,7 @@ public class BoardController : MonoBehaviour {
 	// Triggerを抜けた時の判定
 	private void OnTriggerExit(Collider other)
 	{
+
 		// SpeedUpAreaを抜けたときの処理
 		if(other.name == "SpeedUpArea"){
 			// 滑走中だった場合
