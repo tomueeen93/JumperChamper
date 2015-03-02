@@ -18,6 +18,7 @@ public class BodyCollider : MonoBehaviour {
 	private IEnumerator OnTriggerEnter(Collider other)
 	{
 		if(other.tag =="Ground"){
+			// クラッシュした時の処理
 			Debug.Log("Crash");
 			board_obj.rigidbody.AddForce(new Vector3(0,100,0),ForceMode.Impulse);
 			board_obj.transform.FindChild("Human").transform.FindChild("Capsule").collider.isTrigger = false;

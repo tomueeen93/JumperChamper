@@ -33,6 +33,10 @@ public class BoardController : MonoBehaviour {
 	public bool bad_direction = false;
 	// クラッシュしたかどうか
 	public bool crashed = false;
+	// ジャンプ中の回転数
+	Vector3 delta_rotation;
+	// 前のフレームのオイラー角
+	Vector3 pre_rotation;
 
 	// イベントの設定
 	private bool touch;
@@ -54,6 +58,7 @@ public class BoardController : MonoBehaviour {
 	string distance_str;
 	string rotate_str;
 	string direction_str;
+	string delta_rotation_str;
 
 	// アニメーション用にオブジェクト取得
 	Animator animator;
@@ -68,8 +73,6 @@ public class BoardController : MonoBehaviour {
 		// デバッグ用の処理
 		TextObject = GameObject.Find("DebugLog");
 		str = TextObject.GetComponent<Text>();
-
-		// テスト用
 	}
 	
 	// Update is called once per frame
@@ -82,6 +85,7 @@ public class BoardController : MonoBehaviour {
 		}
 		// 空中の位置制御
 		if(jumped){
+			CalculateDeltaRotation();
 			if(transform.position.x > 25)
 				transform.position = new Vector3(29,transform.position.y,transform.position.z);
 			else if(transform.position.x < -25)
@@ -113,22 +117,16 @@ public class BoardController : MonoBehaviour {
 		// 上キー入力
 		if (Input.GetKeyDown(KeyCode.UpArrow)) {
 			if(jumped){
-						rigidbody.AddRelativeTorque(Vector3.right * (rotate_power/5), ForceMode.Impulse);
+				rigidbody.AddRelativeTorque(Vector3.right * (rotate_power/5), ForceMode.Impulse);
 			}
 			// ジャンプ中のアニメーションを開始
-			//boarderModelObject.SendMessage("AnimateJumping");
-			//rigidbody.AddRelativeForce(Vector3.up * jump_power, ForceMode.Impulse);
 			Debug.Log("Jump");
-			animator.SetTrigger("toFalling");
 		}
 		// 下キー入力
 		if (Input.GetKeyDown(KeyCode.DownArrow)) {
-			if(sliding){
-
-			}else{
-				rigidbody.AddForce(Vector3.back * move_power, ForceMode.Impulse);
+			if(jumped){
+				rigidbody.AddRelativeTorque(Vector3.left * (rotate_power/5), ForceMode.Impulse);
 			}
-
 		}
 		//　タッチ操作がされていた時の処理
 		if(touch){
@@ -167,7 +165,6 @@ public class BoardController : MonoBehaviour {
 	private void Rotate(int deg){
 		Debug.Log (deg+" , "+Mathf.Sin(deg));
 
-#if DEBUG
 		Vector3 v = new Vector3( Mathf.Cos(deg), Mathf.Sin(deg), 0f);
 		rigidbody.AddRelativeTorque(v, ForceMode.Impulse);
 		rigidbody.AddRelativeTorque (v , ForceMode.Impulse);
@@ -178,8 +175,19 @@ public class BoardController : MonoBehaviour {
 		else if(false){}
 		else if(false){}
 		else Debug.Log("Rotate ERROR");
-#endif
+	}
 
+	private void CalculateDeltaRotation(){
+		// 前のフレームとの角度差を計算
+		float dx = Mathf.Abs (transform.localEulerAngles.x - pre_rotation.x);
+		float dy = Mathf.Abs (transform.localEulerAngles.y - pre_rotation.y);
+		float dz = Mathf.Abs (transform.localEulerAngles.z - pre_rotation.z);
+		if (dx >180)dx = 0;
+		if (dy > 180)dy = 0;
+		if (dz > 180)dz = 0;
+		delta_rotation = new Vector3 (delta_rotation.x + dx, delta_rotation.y + dy, delta_rotation.z + dz);
+		// 今の角度を保存
+		pre_rotation = transform.localEulerAngles;
 	}
 	// トリガーの衝突判定
 	private void OnTriggerEnter(Collider other)
@@ -211,14 +219,15 @@ public class BoardController : MonoBehaviour {
 	// Triggerを抜けた時の判定
 	private void OnTriggerExit(Collider other)
 	{
-
 		// SpeedUpAreaを抜けたときの処理
 		if(other.name == "SpeedUpArea"){
 			// 滑走中だった場合
 			if(sliding){
 				Debug.Log ("sliding : " + sliding);
+				// 角度のリセット
+				delta_rotation = new Vector3(0,0,0);
 				// 少しだけ上方向に力を加える
-				rigidbody.AddRelativeForce(Vector3.up * jump_power, ForceMode.Impulse);
+				// rigidbody.AddRelativeForce(Vector3.up * jump_power, ForceMode.Impulse);
 				// 滑走終了 ジャンプ開始
 				sliding= false;
 				jumped=true;
@@ -240,6 +249,10 @@ public class BoardController : MonoBehaviour {
 		if(other.gameObject.tag == "Ground"){
 			// 着地した時の処理
 			if(!landed){
+				// スコア加算
+
+				// 回転角をリセット
+
 				// 着地時のボード角度から向きを判定
 				float board_direction_Y = this.transform.eulerAngles.y;
 				if(!checkLeftFront(board_direction_Y,30))Debug.Log ("Landed Check ERROR");
@@ -273,10 +286,12 @@ public class BoardController : MonoBehaviour {
 		// 速度の取得
 		velocity_str = this.rigidbody.velocity.ToString();
 		// 回転の取得
-		rotate_str = this.transform.eulerAngles.ToString();
+		rotate_str = this.transform.localEulerAngles.ToString();
+		// 回転角の取得
+		delta_rotation_str = delta_rotation.ToString();
 		string debug_message = "";
 		debug_message = "status : " + status_str + "\nvelocity : " + velocity_str + "\nrotate : " + rotate_str
-			+"\n"+direction_str;
+			+"\n"+direction_str+"\n"+delta_rotation_str;
 		str.text = debug_message;
 	}
 
