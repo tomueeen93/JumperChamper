@@ -15,11 +15,20 @@ public class BodyCollider : MonoBehaviour {
 	}
 
 	// A body touch ground
-	private void OnTriggerEnter(Collider other)
+	private IEnumerator OnTriggerEnter(Collider other)
 	{
 		if(other.tag =="Ground"){
 			Debug.Log("Crash");
-			Destroy(board_obj);
+			board_obj.rigidbody.AddForce(new Vector3(0,100,0),ForceMode.Impulse);
+			board_obj.transform.FindChild("Human").transform.FindChild("Capsule").collider.isTrigger = false;
+			board_obj.transform.FindChild("Human").transform.FindChild("Sphere").collider.isTrigger = false;
+			board_obj.gameObject.GetComponent<BoardController>().crashed = true;
+			// Destroy(board_obj);
+			Debug.Log ("wait start");
+			yield return new WaitForSeconds(2);
+			Application.LoadLevel("title");
+
 		}
 	}
+
 }

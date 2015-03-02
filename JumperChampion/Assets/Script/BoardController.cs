@@ -5,32 +5,34 @@ using UnityEngine.UI;
 
 public class BoardController : MonoBehaviour {
 	// 滑走スピード
-	public float move_power;
+	public float move_power = 100;
 	// ジャンプ力
-	public float jump_power;
+	public float jump_power = 0.5f;
 	// 回転力
-	public float rotate_power;
+	public float rotate_power = 25;
 	// SpeedUpAreaでかかる重力
-	public float down_power;
+	public float down_power = 50;
 	// 進行方向の判定
-	public bool go_left;
+	public bool go_left = false;
 	// 滑走中の判定
-	public bool sliding;
+	public bool sliding = false;
 	// 着地後かどうかの判定
-	public bool landed;
+	public bool landed = false;
 	// ジャンプ後かどうかの判定
-	public bool jumped;
+	public bool jumped = true;
 	// 体の捻りの判定
-	public bool left_twist;
-	public bool right_twist;
+	public bool left_twist = false;
+	public bool right_twist = false;
 	// 逆ひねりをいれるタイミング
-	public float twist_time;
+	public float twist_time = 0;
 	// 回転ジャンプをするかどうか
-	public bool rotate_jump;
+	public bool rotate_jump = false;
 	// どちら側を前に滑っているか
-	public bool left_front;
+	public bool left_front = false;
 	// 着地した際のBadDireciton判定
-	public bool bad_direction;
+	public bool bad_direction = false;
+	// クラッシュしたかどうか
+	public bool crashed = false;
 
 	// イベントの設定
 	private bool touch;
@@ -59,19 +61,6 @@ public class BoardController : MonoBehaviour {
 
 	// Use this for initialization
 	private void Start () {
-		move_power = 100;
-		jump_power = 0.5f;
-		rotate_power = 25;
-		down_power = 50;
-		go_left = false;
-		sliding = false;
-		landed = false;
-		jumped = true;
-		left_twist = false;
-		right_twist = false;
-		left_front =false;
-		bad_direction =false;
-
 		Debug.Log (boarderModelObject);
 		Debug.Log (animator);
 
@@ -79,10 +68,26 @@ public class BoardController : MonoBehaviour {
 		// デバッグ用の処理
 		TextObject = GameObject.Find("DebugLog");
 		str = TextObject.GetComponent<Text>();
+
+		// テスト用
 	}
 	
 	// Update is called once per frame
 	private void Update () {
+		// 手前に進んでいく処理
+		if(landed&&!crashed){
+			transform.position = new Vector3(transform.position.x,transform.position.y,transform.position.z - 0.3f);
+		}else if(jumped&&!crashed){
+			transform.position = new Vector3(transform.position.x,transform.position.y,transform.position.z - 0.05f);
+		}
+		// 空中の位置制御
+		if(jumped){
+			if(transform.position.x > 25)
+				transform.position = new Vector3(29,transform.position.y,transform.position.z);
+			else if(transform.position.x < -25)
+				transform.position = new Vector3(-29,transform.position.y,transform.position.z);
+		}
+
 		// 速度制限をかける
 		float maxspeed = 50;
 		if (this.rigidbody.velocity.x < -maxspeed) {
@@ -107,9 +112,12 @@ public class BoardController : MonoBehaviour {
 		}
 		// 上キー入力
 		if (Input.GetKeyDown(KeyCode.UpArrow)) {
+			if(jumped){
+						rigidbody.AddRelativeTorque(Vector3.right * (rotate_power/5), ForceMode.Impulse);
+			}
 			// ジャンプ中のアニメーションを開始
 			//boarderModelObject.SendMessage("AnimateJumping");
-			rigidbody.AddRelativeForce(Vector3.up * jump_power, ForceMode.Impulse);
+			//rigidbody.AddRelativeForce(Vector3.up * jump_power, ForceMode.Impulse);
 			Debug.Log("Jump");
 			animator.SetTrigger("toFalling");
 		}
@@ -118,7 +126,7 @@ public class BoardController : MonoBehaviour {
 			if(sliding){
 
 			}else{
-				rigidbody.AddForce(Vector3.down * move_power, ForceMode.Impulse);
+				rigidbody.AddForce(Vector3.back * move_power, ForceMode.Impulse);
 			}
 
 		}
@@ -220,6 +228,8 @@ public class BoardController : MonoBehaviour {
 				landed = false;
 				// ジャンプアニメーションの開始
 				animator.SetTrigger("toJumping");
+				// スノーパーティクルを消す
+				transform.FindChild("SnowParticle").gameObject.SetActiveRecursively(false);
 			}
 		}
 	}
@@ -228,7 +238,7 @@ public class BoardController : MonoBehaviour {
 	{
 		// Groundタグとの衝突時の処理
 		if(other.gameObject.tag == "Ground"){
-			// 着地していなかったら
+			// 着地した時の処理
 			if(!landed){
 				// 着地時のボード角度から向きを判定
 				float board_direction_Y = this.transform.eulerAngles.y;
@@ -248,6 +258,8 @@ public class BoardController : MonoBehaviour {
 					if(left_front)animator.SetTrigger("toLeftSlide");
 						else animator.SetTrigger("toRightSlide");
 				}
+				// スノーパーティクルを出す
+				transform.FindChild("SnowParticle").gameObject.SetActiveRecursively(true);
 			}
 		}
 	}

@@ -50,10 +50,12 @@
      <Compile Include="Assets\Script\AnimationController_ver4_1.cs" />
      <Compile Include="Assets\Script\BoardController.cs" />
      <Compile Include="Assets\Script\BodyCollider.cs" />
+     <Compile Include="Assets\Script\ButtonController.cs" />
      <Compile Include="Assets\Script\CameraController.cs" />
      <Compile Include="Assets\Script\Flick.cs" />
      <Compile Include="Assets\Script\Flick2.cs" />
      <Compile Include="Assets\Script\Manager.cs" />
+     <Compile Include="Assets\Script\ObjectDestroyerController.cs" />
      <Compile Include="Assets\Script\SpeedUp.cs" />
      <None Include="Assets\Standard Assets\Skyboxes\_skybox info.txt" />
  <Reference Include="UnityEngine.UI">
