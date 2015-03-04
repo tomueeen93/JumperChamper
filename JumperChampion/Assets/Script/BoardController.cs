@@ -37,8 +37,17 @@ public class BoardController : MonoBehaviour {
 	Vector3 delta_rotation;
 	// 前のフレームのオイラー角
 	Vector3 pre_rotation;
+    // 回転数
+    public int count_rotate = 0;
 
-	// イベントの設定
+    // スコア
+    public float score;
+    // 基礎点
+    public float base_score = 100;
+    // スコア減少率
+    public float decreasing_rate = 0.5f;
+
+    // イベントの設定
 	private bool touch;
 	private bool slide;
 	private bool flick;
@@ -50,7 +59,7 @@ public class BoardController : MonoBehaviour {
 	// フリックの距離
 	float distance;
 	// デバッグ用のオブジェクト
-	public bool enable_debug = true;
+	public bool enable_debug = false;
 	private GameObject TextObject;
 	Text str;
 	string status_str;
@@ -59,85 +68,126 @@ public class BoardController : MonoBehaviour {
 	string rotate_str;
 	string direction_str;
 	string delta_rotation_str;
+    string count_rotate_str;
+    string score_str;
 
 	// アニメーション用にオブジェクト取得
 	Animator animator;
 	public GameObject boarderModelObject;
 
-	// Use this for initialization
+	//サウンド用のオブジェクト取得
+	public AudioSource[] audiosources;
+
 	private void Start () {
 		Debug.Log (boarderModelObject);
 		Debug.Log (animator);
 
+		// 音声の取得
+		audiosources = GetComponents<AudioSource>();
+		// ジャンプアニメーションの再生
 		animator.SetTrigger("toJumping");
 		// デバッグ用の処理
 		TextObject = GameObject.Find("DebugLog");
 		str = TextObject.GetComponent<Text>();
 	}
-	
-	// Update is called once per frame
 	private void Update () {
+		// 手前に進んでいく処理
+		MoveForward ();
+		// 空中の位置制御
+		JumpControl ();
+		// 速度制限をかける
+		LimitSpeed ();
+		// キー入力の判断
+		JudgeKeyInput ();
+		// タッチ操作がされていた時の処理
+		JudgeTouch ();
+		// スライド操作がされていた時の処理
+		JudgeSlide ();
+		// フリック操作がされた時の処理
+		JudgeFlick ();
+		// デバッグメッセージの表示
+		if (enable_debug)debugMessage ();
+	}
+	private void MoveForward(){
 		// 手前に進んでいく処理
 		if(landed&&!crashed){
 			transform.position = new Vector3(transform.position.x,transform.position.y,transform.position.z - 0.3f);
 		}else if(jumped&&!crashed){
 			transform.position = new Vector3(transform.position.x,transform.position.y,transform.position.z - 0.05f);
 		}
+	}
+	private void JumpControl (){
 		// 空中の位置制御
 		if(jumped){
+			// 回転数の計算
 			CalculateDeltaRotation();
+            // １回転したかどうかの判定
+            JudgeOneRotate();
+			// 壁に近づき過ぎた時の処理
 			if(transform.position.x > 25)
 				transform.position = new Vector3(29,transform.position.y,transform.position.z);
 			else if(transform.position.x < -25)
 				transform.position = new Vector3(-29,transform.position.y,transform.position.z);
 		}
-
-		// 速度制限をかける
+	}
+	private void CalculateDeltaRotation() {
+		// 前のフレームとの角度差を計算
+		float dx = Mathf.Abs (transform.rotation.x - pre_rotation.x);
+		float dy = Mathf.Abs (transform.rotation.y - pre_rotation.y);
+		float dz = Mathf.Abs (transform.rotation.z - pre_rotation.z);
+		// 差分を計算
+		delta_rotation = new Vector3 (delta_rotation.x + dx, delta_rotation.y + dy, delta_rotation.z + dz);
+		// 今の角度を保存
+		pre_rotation = new Vector3(transform.rotation.x,transform.rotation.y,transform.rotation.z);
+	}
+    private void JudgeOneRotate() {
+        // dr.yが1.7ごとに回転数を増やす
+        if (count_rotate < Mathf.FloorToInt(delta_rotation.y / 1.7f)){
+            count_rotate++;   
+        }
+    }
+	private void LimitSpeed (){
+		// 速度制限をかける default 50
 		float maxspeed = 50;
 		if (this.rigidbody.velocity.x < -maxspeed) {
 			rigidbody.velocity = new Vector3(-maxspeed,rigidbody.velocity.y,0);
 		} else if (this.rigidbody.velocity.x > maxspeed) {
 			rigidbody.velocity = new Vector3(maxspeed,rigidbody.velocity.y,0);
 		}
-
+	}
+	private void JudgeKeyInput (){
 		// 左キー入力
 		if (Input.GetKeyDown(KeyCode.LeftArrow)) {
 			// ジャンプ中なら左回転
-			if(jumped){
-				rigidbody.AddRelativeTorque(Vector3.down * rotate_power, ForceMode.Impulse);
-			}
+			if(jumped){rigidbody.AddTorque(-transform.up * rotate_power, ForceMode.Impulse);}
 		}
 		// 右キー入力
 		if (Input.GetKeyDown(KeyCode.RightArrow)) {
 			// ジャンプ中なら右回転
-			if(jumped){
-				rigidbody.AddRelativeTorque(Vector3.up * rotate_power, ForceMode.Impulse);
-			}
+			if(jumped){rigidbody.AddTorque(transform.up * rotate_power, ForceMode.Impulse);}
 		}
 		// 上キー入力
 		if (Input.GetKeyDown(KeyCode.UpArrow)) {
-			if(jumped){
-				rigidbody.AddRelativeTorque(Vector3.right * (rotate_power/5), ForceMode.Impulse);
-			}
-			// ジャンプ中のアニメーションを開始
-			Debug.Log("Jump");
+			if(jumped){rigidbody.AddTorque(transform.forward * (rotate_power/5), ForceMode.Impulse);}
 		}
 		// 下キー入力
 		if (Input.GetKeyDown(KeyCode.DownArrow)) {
-			if(jumped){
-				rigidbody.AddRelativeTorque(Vector3.left * (rotate_power/5), ForceMode.Impulse);
-			}
+			if(jumped){rigidbody.AddTorque(-transform.forward * (rotate_power/5), ForceMode.Impulse);}
 		}
+	}
+	private void JudgeTouch(){
 		//　タッチ操作がされていた時の処理
 		if(touch){
 			Debug.Log("Touch");
 			// タッチの状態を戻す
 			setTouch(false);
 		}
+	}
+	private void JudgeSlide(){
 		// スライド操作がされていた時の処理
 		if(slide){
 			// Debug.Log("Slide");
-
+			
 			// ツイスト可能かどうかのチェック
 			if(distance > 20 && sliding){
 				// 左右ツイストの判定
@@ -148,47 +198,30 @@ public class BoardController : MonoBehaviour {
 			//　スライドの状態を終了する
 			setSlide(false);
 		}
+	}
+	private void JudgeFlick(){
 		// フリック操作がされた時の処理
 		if(flick){
-			Debug.Log("Flick");
+			// Debug.Log("Flick");
+			// TODO フリックした時の音を再生
+			//audiosources[0].Play();
 			// 回転をさせる
 			Rotate (deg);
 			// フリック状態の終了
 			setFlick(false);
 		}
-
-
-		// デバッグメッセージの表示
-		if (enable_debug)debugMessage ();else str.text="";
 	}
-	// オブジェクトの回転
 	private void Rotate(int deg){
-		Debug.Log (deg+" , "+Mathf.Sin(deg));
+		// オブジェクトの回転
 
 		Vector3 v = new Vector3( Mathf.Cos(deg), Mathf.Sin(deg), 0f);
-		rigidbody.AddRelativeTorque(v, ForceMode.Impulse);
-		rigidbody.AddRelativeTorque (v , ForceMode.Impulse);
 		// 右回転
-		if(deg > 60 && deg < 120)rigidbody.AddRelativeTorque(Vector3.up * rotate_power, ForceMode.Impulse);
+        if (deg > 60 && deg < 120) rigidbody.AddTorque(transform.up * rotate_power, ForceMode.Impulse);
 		// 左回転
-		else if(deg > 240 && deg < 300)rigidbody.AddRelativeTorque(Vector3.down * rotate_power, ForceMode.Impulse);
-		else if(false){}
-		else if(false){}
+        else if (deg > 240 && deg < 300) rigidbody.AddTorque(-transform.up * rotate_power, ForceMode.Impulse);
 		else Debug.Log("Rotate ERROR");
 	}
 
-	private void CalculateDeltaRotation(){
-		// 前のフレームとの角度差を計算
-		float dx = Mathf.Abs (transform.localEulerAngles.x - pre_rotation.x);
-		float dy = Mathf.Abs (transform.localEulerAngles.y - pre_rotation.y);
-		float dz = Mathf.Abs (transform.localEulerAngles.z - pre_rotation.z);
-		if (dx >180)dx = 0;
-		if (dy > 180)dy = 0;
-		if (dz > 180)dz = 0;
-		delta_rotation = new Vector3 (delta_rotation.x + dx, delta_rotation.y + dy, delta_rotation.z + dz);
-		// 今の角度を保存
-		pre_rotation = transform.localEulerAngles;
-	}
 	// トリガーの衝突判定
 	private void OnTriggerEnter(Collider other)
 	{
@@ -216,31 +249,36 @@ public class BoardController : MonoBehaviour {
 			}
 		}
 	}
-	// Triggerを抜けた時の判定
+	// トリガーを抜けた時の判定
 	private void OnTriggerExit(Collider other)
 	{
 		// SpeedUpAreaを抜けたときの処理
 		if(other.name == "SpeedUpArea"){
-			// 滑走中だった場合
-			if(sliding){
-				Debug.Log ("sliding : " + sliding);
-				// 角度のリセット
-				delta_rotation = new Vector3(0,0,0);
-				// 少しだけ上方向に力を加える
-				// rigidbody.AddRelativeForce(Vector3.up * jump_power, ForceMode.Impulse);
-				// 滑走終了 ジャンプ開始
-				sliding= false;
-				jumped=true;
-				// 滑走方向状態の解除
-				bad_direction = false;
-				// 着地のリセット
-				landed = false;
-				// ジャンプアニメーションの開始
-				animator.SetTrigger("toJumping");
-				// スノーパーティクルを消す
-				transform.FindChild("SnowParticle").gameObject.SetActiveRecursively(false);
-			}
+			// ジャンプ状態に入った時の処理
+			if(sliding)	IntoJumping();
 		}
+	}
+	private void IntoJumping(){
+		// 角度のリセット
+		delta_rotation = new Vector3(0,0,0);
+		pre_rotation = new Vector3 (transform.rotation.x,transform.rotation.y,transform.rotation.z);
+        // 回転数のリセット
+        count_rotate = 0;
+		// 滑走終了 ジャンプ開始
+		sliding= false;
+		jumped=true;
+		// 滑走方向状態の解除
+		bad_direction = false;
+		// 着地のリセット
+		landed = false;
+		// 滑走サウンドの停止
+		audiosources[1].Stop();
+		// TODO ジャンプサウンドの再生
+		
+		// ジャンプアニメーションの開始
+		animator.SetTrigger("toJumping");
+		// スノーパーティクルを消す
+		transform.FindChild("SnowParticle").gameObject.SetActiveRecursively(false);
 	}
 	// コリジョンの衝突判定
 	private void OnCollisionEnter(Collision other)
@@ -248,34 +286,42 @@ public class BoardController : MonoBehaviour {
 		// Groundタグとの衝突時の処理
 		if(other.gameObject.tag == "Ground"){
 			// 着地した時の処理
-			if(!landed){
-				// スコア加算
-
-				// 回転角をリセット
-
-				// 着地時のボード角度から向きを判定
-				float board_direction_Y = this.transform.eulerAngles.y;
-				if(!checkLeftFront(board_direction_Y,30))Debug.Log ("Landed Check ERROR");
-
-				// ツイスト状態を解除
-				left_twist = false;
-				right_twist = false;
-				// 着地状態に以降
-				landed = true;
-				// 滑走アニメーションを開始
-				if(bad_direction)animator.SetTrigger("toIdle"); 
-				else if(go_left){
-					if(left_front)animator.SetTrigger("toRightSlide");
-						else animator.SetTrigger("toLeftSlide");
-				} else {
-					if(left_front)animator.SetTrigger("toLeftSlide");
-						else animator.SetTrigger("toRightSlide");
-				}
-				// スノーパーティクルを出す
-				transform.FindChild("SnowParticle").gameObject.SetActiveRecursively(true);
-			}
+			if(!landed)IntoLanded();
 		}
 	}
+	// 着地した時の処理
+	private void IntoLanded(){
+        // 着地時のボード角度から向きを判定
+		float board_direction_Y = this.transform.eulerAngles.y;
+		if(!checkLeftFront(board_direction_Y,30))Debug.Log ("Landed Check ERROR");
+        // スコア加算
+        AddScore();
+		// ツイスト状態を解除
+		left_twist = false;
+		right_twist = false;
+		// 着地状態に以降
+		landed = true;
+		// 滑走アニメーションを開始
+		if(bad_direction)
+			animator.SetTrigger("toIdle");
+		else if(go_left){
+			if(left_front)animator.SetTrigger("toRightSlide");
+			else animator.SetTrigger("toLeftSlide");
+		} else {
+			if(left_front)animator.SetTrigger("toLeftSlide");
+			else animator.SetTrigger("toRightSlide");
+		}
+		// 滑走サウンドの再生
+		audiosources[1].Play();
+		// 着地音の再生
+		audiosources[2].Play ();
+		// スノーパーティクルを出す
+		transform.FindChild("SnowParticle").gameObject.SetActiveRecursively(true);
+	}
+    private void AddScore() { 
+        if(bad_direction)score += (count_rotate * base_score) * decreasing_rate;
+        else score += count_rotate * base_score;
+    }
 
 	// デバッグメッセージの表示
 	public void debugMessage(){
@@ -286,17 +332,23 @@ public class BoardController : MonoBehaviour {
 		// 速度の取得
 		velocity_str = this.rigidbody.velocity.ToString();
 		// 回転の取得
-		rotate_str = this.transform.localEulerAngles.ToString();
+		rotate_str = this.transform.localRotation.y.ToString();
 		// 回転角の取得
 		delta_rotation_str = delta_rotation.ToString();
+        // 回転数の取得
+        count_rotate_str = count_rotate.ToString();
+        // スコアの取得
+        score_str = score.ToString();
+        // デバッグ情報の書き込み
 		string debug_message = "";
 		debug_message = "status : " + status_str + "\nvelocity : " + velocity_str + "\nrotate : " + rotate_str
-			+"\n"+direction_str+"\n"+delta_rotation_str;
+            + "\n" + direction_str + "\n" + delta_rotation_str + "\n" + count_rotate_str
+            + "\n" + score_str;
 		str.text = debug_message;
 	}
-
 	// どちらが前なのかチェック
 	public bool checkLeftFront(float degY , int maxDeg){
+        bad_direction = false;
 		if(360-maxDeg < degY || degY < maxDeg){
 			if(go_left){
 				direction_str = "Good Direction : right front\n" + degY;

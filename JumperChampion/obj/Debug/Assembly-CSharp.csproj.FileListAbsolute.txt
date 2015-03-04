@@ -1,0 +1,12 @@
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\Temp\bin\Debug\Assembly-CSharp.dll
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\Temp\bin\Debug\Assembly-CSharp.pdb
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\Temp\bin\Debug\UnityEditor.dll
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\Temp\bin\Debug\UnityEngine.dll
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\Temp\bin\Debug\UnityEngine.UI.dll
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\Temp\bin\Debug\Mono.Cecil.dll
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\Temp\bin\Debug\nunit.framework.dll
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\Temp\bin\Debug\Unity.DataContract.dll
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\Temp\bin\Debug\ICSharpCode.NRefactory.dll
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\obj\Debug\Assembly-CSharp.csprojResolveAssemblyReference.cache
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\obj\Debug\Assembly-CSharp.dll
+E:\UnityGames\JumperChamper\JumperChamper\JumperChampion\obj\Debug\Assembly-CSharp.pdb

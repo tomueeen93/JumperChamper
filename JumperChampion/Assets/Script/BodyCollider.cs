@@ -3,15 +3,12 @@ using System.Collections;
 
 public class BodyCollider : MonoBehaviour {
 	GameObject board_obj;
+    GameObject score_obj;
 
 	// Use this for initialization
 	void Start () {
-		 board_obj = GameObject.Find("Board");
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
+		board_obj = GameObject.Find("Board");
+        score_obj = GameObject.Find("ScoreObject");
 	}
 
 	// A body touch ground
@@ -27,9 +24,10 @@ public class BodyCollider : MonoBehaviour {
 			// Destroy(board_obj);
 			Debug.Log ("wait start");
 			yield return new WaitForSeconds(2);
-			Application.LoadLevel("title");
-
+            float s = board_obj.gameObject.GetComponent<BoardController>().score;
+            score_obj.gameObject.GetComponent<ScoreController>().score = s;
+            DontDestroyOnLoad(score_obj.gameObject);
+			Application.LoadLevel("score");
 		}
 	}
-
 }
