@@ -59,7 +59,7 @@ public class BoardController : MonoBehaviour {
 	// フリックの距離
 	float distance;
 	// デバッグ用のオブジェクト
-	public bool enable_debug = false;
+	public bool enable_debug = true;
 	private GameObject TextObject;
 	Text str;
 	string status_str;
@@ -77,15 +77,14 @@ public class BoardController : MonoBehaviour {
 
 	//サウンド用のオブジェクト取得
 	public AudioSource[] audiosources;
+    public float pitch_plus = 0;
+
+    // GUI生成用のオブジェクト取得
+    public GameObject GUIObject;
 
 	private void Start () {
-		Debug.Log (boarderModelObject);
-		Debug.Log (animator);
-
 		// 音声の取得
 		audiosources = GetComponents<AudioSource>();
-		// ジャンプアニメーションの再生
-		animator.SetTrigger("toJumping");
 		// デバッグ用の処理
 		TextObject = GameObject.Find("DebugLog");
 		str = TextObject.GetComponent<Text>();
@@ -141,38 +140,42 @@ public class BoardController : MonoBehaviour {
 		pre_rotation = new Vector3(transform.rotation.x,transform.rotation.y,transform.rotation.z);
 	}
     private void JudgeOneRotate() {
-        // dr.yが1.7ごとに回転数を増やす
-        if (count_rotate < Mathf.FloorToInt(delta_rotation.y / 1.7f)){
-            count_rotate++;   
+        // dr.yが1.4fごとに回転数を増やす
+        if (count_rotate < Mathf.FloorToInt(delta_rotation.y / 0.7f)){
+            count_rotate++;
+            GUIObject.gameObject.GetComponent<GUITextGenerator>().GenerateText(base_score+"pt",1);
+            if (audiosources[3].pitch< 2.2f) audiosources[3].pitch += pitch_plus;
+            audiosources[3].Play();
+            pitch_plus += 0.15f;
         }
     }
 	private void LimitSpeed (){
 		// 速度制限をかける default 50
 		float maxspeed = 50;
-		if (this.rigidbody.velocity.x < -maxspeed) {
-			rigidbody.velocity = new Vector3(-maxspeed,rigidbody.velocity.y,0);
-		} else if (this.rigidbody.velocity.x > maxspeed) {
-			rigidbody.velocity = new Vector3(maxspeed,rigidbody.velocity.y,0);
+		if (this.GetComponent<Rigidbody>().velocity.x < -maxspeed) {
+			GetComponent<Rigidbody>().velocity = new Vector3(-maxspeed,GetComponent<Rigidbody>().velocity.y,0);
+		} else if (this.GetComponent<Rigidbody>().velocity.x > maxspeed) {
+			GetComponent<Rigidbody>().velocity = new Vector3(maxspeed,GetComponent<Rigidbody>().velocity.y,0);
 		}
 	}
 	private void JudgeKeyInput (){
 		// 左キー入力
 		if (Input.GetKeyDown(KeyCode.LeftArrow)) {
 			// ジャンプ中なら左回転
-			if(jumped){rigidbody.AddTorque(-transform.up * rotate_power, ForceMode.Impulse);}
+			if(jumped){GetComponent<Rigidbody>().AddTorque(-transform.up * rotate_power, ForceMode.Impulse);}
 		}
 		// 右キー入力
 		if (Input.GetKeyDown(KeyCode.RightArrow)) {
 			// ジャンプ中なら右回転
-			if(jumped){rigidbody.AddTorque(transform.up * rotate_power, ForceMode.Impulse);}
+			if(jumped){GetComponent<Rigidbody>().AddTorque(transform.up * rotate_power, ForceMode.Impulse);}
 		}
 		// 上キー入力
 		if (Input.GetKeyDown(KeyCode.UpArrow)) {
-			if(jumped){rigidbody.AddTorque(transform.forward * (rotate_power/5), ForceMode.Impulse);}
+			if(jumped){GetComponent<Rigidbody>().AddTorque(transform.forward * (rotate_power/5), ForceMode.Impulse);}
 		}
 		// 下キー入力
 		if (Input.GetKeyDown(KeyCode.DownArrow)) {
-			if(jumped){rigidbody.AddTorque(-transform.forward * (rotate_power/5), ForceMode.Impulse);}
+			if(jumped){GetComponent<Rigidbody>().AddTorque(-transform.forward * (rotate_power/5), ForceMode.Impulse);}
 		}
 	}
 	private void JudgeTouch(){
@@ -216,9 +219,9 @@ public class BoardController : MonoBehaviour {
 
 		Vector3 v = new Vector3( Mathf.Cos(deg), Mathf.Sin(deg), 0f);
 		// 右回転
-        if (deg > 60 && deg < 120) rigidbody.AddTorque(transform.up * rotate_power, ForceMode.Impulse);
+        if (deg > 60 && deg < 120) GetComponent<Rigidbody>().AddTorque(transform.up * rotate_power, ForceMode.Impulse);
 		// 左回転
-        else if (deg > 240 && deg < 300) rigidbody.AddTorque(-transform.up * rotate_power, ForceMode.Impulse);
+        else if (deg > 240 && deg < 300) GetComponent<Rigidbody>().AddTorque(-transform.up * rotate_power, ForceMode.Impulse);
 		else Debug.Log("Rotate ERROR");
 	}
 
@@ -255,15 +258,20 @@ public class BoardController : MonoBehaviour {
 		// SpeedUpAreaを抜けたときの処理
 		if(other.name == "SpeedUpArea"){
 			// ジャンプ状態に入った時の処理
-			if(sliding)	IntoJumping();
+            if (sliding) {
+                IntoJumping();
+            } 
 		}
 	}
-	private void IntoJumping(){
+	// ジャンプした時の処理
+    private void IntoJumping(){
 		// 角度のリセット
 		delta_rotation = new Vector3(0,0,0);
 		pre_rotation = new Vector3 (transform.rotation.x,transform.rotation.y,transform.rotation.z);
         // 回転数のリセット
         count_rotate = 0;
+        // FreezeRotationY の解除
+        this.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezePositionZ;
 		// 滑走終了 ジャンプ開始
 		sliding= false;
 		jumped=true;
@@ -294,17 +302,29 @@ public class BoardController : MonoBehaviour {
         // 着地時のボード角度から向きを判定
 		float board_direction_Y = this.transform.eulerAngles.y;
 		if(!checkLeftFront(board_direction_Y,30))Debug.Log ("Landed Check ERROR");
+        // GUIにメッセージを入れる
+        if (bad_direction) {
+            GUIObject.gameObject.GetComponent<GUITextGenerator>().GenerateText("BAD", 3);
+            // BADサウンドの再生
+            audiosources[4].Play();
+        } else { 
+            GUIObject.gameObject.GetComponent<GUITextGenerator>().GenerateText("GOOD",2);
+            // GOODサウンドの再生
+            audiosources[5].Play();
+        }
         // スコア加算
         AddScore();
+        // FreezeRotationにチェックを入れて回転させないようにする
+        this.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
 		// ツイスト状態を解除
 		left_twist = false;
 		right_twist = false;
 		// 着地状態に以降
 		landed = true;
 		// 滑走アニメーションを開始
-		if(bad_direction)
+		if(bad_direction){
 			animator.SetTrigger("toIdle");
-		else if(go_left){
+        } else if(go_left){
 			if(left_front)animator.SetTrigger("toRightSlide");
 			else animator.SetTrigger("toLeftSlide");
 		} else {
@@ -315,9 +335,13 @@ public class BoardController : MonoBehaviour {
 		audiosources[1].Play();
 		// 着地音の再生
 		audiosources[2].Play ();
+        // ピッチのリセット
+        audiosources[3].pitch = 0.8f;
+        pitch_plus = 0;
 		// スノーパーティクルを出す
 		transform.FindChild("SnowParticle").gameObject.SetActiveRecursively(true);
 	}
+    // スコアの加算
     private void AddScore() { 
         if(bad_direction)score += (count_rotate * base_score) * decreasing_rate;
         else score += count_rotate * base_score;
@@ -330,7 +354,7 @@ public class BoardController : MonoBehaviour {
 		else if (jumped)
 			status_str = "jumping";
 		// 速度の取得
-		velocity_str = this.rigidbody.velocity.ToString();
+		velocity_str = this.GetComponent<Rigidbody>().velocity.ToString();
 		// 回転の取得
 		rotate_str = this.transform.localRotation.y.ToString();
 		// 回転角の取得

@@ -1,7 +1,7 @@
 fileFormatVersion: 2
 guid: e92574d1e41b7574081f398fc2ce45e7
 ModelImporter:
-  serializedVersion: 16
+  serializedVersion: 18
   fileIDToRecycleName:
     100000: arm_left
     100002: arm_right
@@ -96,6 +96,7 @@ ModelImporter:
     7400008: LeftSlide
     7400010: RightDepression
     7400012: RightSlide
+    7400014: Idle0
     9500000: //RootNode
     13700000: arm_left
     13700002: arm_right
@@ -124,16 +125,16 @@ ModelImporter:
     extraExposedTransformPaths: []
     clipAnimations:
     - serializedVersion: 16
-      name: Default Take
-      takeName: Default Take
+      name: Idle0
+      takeName: Idle
       firstFrame: 0
-      lastFrame: 59
+      lastFrame: 78
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
       cycleOffset: 0
       loop: 0
-      loopTime: 0
+      loopTime: 1
       loopBlend: 0
       loopBlendOrientation: 0
       loopBlendPositionY: 0
@@ -331,7 +332,7 @@ ModelImporter:
       name: Jumping
       takeName: Jumping
       firstFrame: 12
-      lastFrame: 59
+      lastFrame: 47
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -535,7 +536,7 @@ ModelImporter:
       name: LeftSlide
       takeName: LeftSlide
       firstFrame: 18
-      lastFrame: 79
+      lastFrame: 61
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -739,7 +740,7 @@ ModelImporter:
       name: RightSlide
       takeName: RightSlide
       firstFrame: 9
-      lastFrame: 56
+      lastFrame: 47
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -848,11 +849,13 @@ ModelImporter:
     generateSecondaryUV: 0
     useFileUnits: 1
     optimizeMeshForGPU: 1
+    keepQuads: 0
     weldVertices: 1
     secondaryUVAngleDistortion: 8
     secondaryUVAreaDistortion: 15.000001
     secondaryUVHardAngle: 88
     secondaryUVPackMargin: 4
+    useFileScale: 0
   tangentSpace:
     normalSmoothAngle: 60
     splitTangentsAcrossUV: 1
@@ -875,3 +878,5 @@ ModelImporter:
   animationType: 2
   additionalBone: 0
   userData: 
+  assetBundleName: 
+  assetBundleVariant: 

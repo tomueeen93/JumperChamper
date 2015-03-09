@@ -18,7 +18,7 @@ public class SpeedUp : MonoBehaviour {
 	private void OnTriggerEnter(Collider other)
 	{
 		if(other.name == "Board"){
-			other.gameObject.rigidbody.AddForce(Vector3.down * down_power, ForceMode.Impulse);
+			other.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * down_power, ForceMode.Impulse);
 		}
 	}
 }

@@ -2,7 +2,8 @@
 using System.Collections;
 
 public class TitleController : MonoBehaviour {
-	void Update () {
+    void Update()
+    {
 		if(Input.GetMouseButton(0)){
 			Application.LoadLevel("main");
 		}
