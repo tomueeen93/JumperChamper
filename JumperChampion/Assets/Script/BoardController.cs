@@ -46,6 +46,12 @@ public class BoardController : MonoBehaviour {
     public float base_score = 100;
     // スコア減少率
     public float decreasing_rate = 0.5f;
+    // ミッションの有無
+    public bool mission = false;
+    // ミッションクリアに必要なポイント
+    public float mission_point = 0f;
+    // ミッションの出題率
+    public float mission_probability = 0.50f;
 
     // イベントの設定
 	private bool touch;
@@ -314,6 +320,22 @@ public class BoardController : MonoBehaviour {
         }
         // スコア加算
         AddScore();
+        // ミッションを出題するかを決定
+        if (mission) {
+            // ミッションクリアかどうかの判定
+            judgeMissionClear();
+            mission = false;
+        } else {
+            // 確率でミッションを出題
+            if (Random.value < mission_probability) {
+                createMission();
+                mission = true;
+                Debug.Log("mission create");
+            } else {
+                mission = false;
+            } 
+        }
+        
         // FreezeRotationにチェックを入れて回転させないようにする
         this.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationY;
 		// ツイスト状態を解除
@@ -345,6 +367,20 @@ public class BoardController : MonoBehaviour {
     private void AddScore() { 
         if(bad_direction)score += (count_rotate * base_score) * decreasing_rate;
         else score += count_rotate * base_score;
+    }
+    // ミッションのクリア判定
+    private void judgeMissionClear() {
+        if (count_rotate >= mission_point) {
+            // success
+            Debug.Log("mission success");
+        } else {
+            // failed
+            Debug.Log("mission failed");
+        }
+    }
+    // ミッションの出題
+    private void createMission() {
+        mission_point = 4;
     }
 
 	// デバッグメッセージの表示
